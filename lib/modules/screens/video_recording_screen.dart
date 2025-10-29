@@ -19,32 +19,50 @@ class VideoRecordingScreen extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.done) {
             return Obx(() {
               if (controller.videoPath.isNotEmpty) {
-                return Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Center(
-                      child: AspectRatio(
-                        aspectRatio:
-                            controller.videoPlayerController!.value.aspectRatio,
-                        child: VideoPlayer(controller.videoPlayerController!),
-                      ),
-                    ),
-                    // Play/Pause Button Overlay
-                    Positioned(
-                      bottom: 20,
-                      child: IconButton(
-                        icon: Icon(
-                          controller.isPlaying.value
-                              ? Icons.pause_circle
-                              : Icons.play_circle,
-                          size: 50,
-                          color: Colors.white,
+                if (controller.videoPlayerController != null &&
+                    controller.videoPlayerController!.value.isInitialized) {
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Center(
+                        child: AspectRatio(
+                          aspectRatio:
+                              controller
+                                  .videoPlayerController
+                                  ?.value
+                                  .aspectRatio ??
+                              16 / 9,
+                          child: VideoPlayer(controller.videoPlayerController!),
                         ),
-                        onPressed: controller.togglePlayPause,
                       ),
+                      // Play/Pause Button Overlay
+                      Positioned(
+                        bottom: 20,
+                        child: IconButton(
+                          icon: Icon(
+                            controller.isPlaying.value
+                                ? Icons.pause_circle
+                                : Icons.play_circle,
+                            size: 50,
+                            color: Colors.white,
+                          ),
+                          onPressed: controller.togglePlayPause,
+                        ),
+                      ),
+                    ],
+                  );
+                } else {
+                  return const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text('Loading video...'),
+                      ],
                     ),
-                  ],
-                );
+                  );
+                }
               } else {
                 if (controller.cameraController == null) {
                   return const Center(child: CircularProgressIndicator());

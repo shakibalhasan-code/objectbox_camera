@@ -10,7 +10,7 @@ class VideoRecordingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final VideoController controller = Get.put(VideoController());
+    final VideoController controller = Get.find<VideoController>();
 
     return Scaffold(
       appBar: AppBar(title: const Text('ObjBox CRUD')),
@@ -24,12 +24,8 @@ class VideoRecordingScreen extends StatelessWidget {
                   alignment: Alignment.center,
                   children: [
                     Center(
-                      child: AspectRatio(
-                        aspectRatio:
-                            controller.videoPlayerController!.value.aspectRatio,
-                        child: CustomVideoPlayer(
-                          videoPath: controller.videoPath.value,
-                        ),
+                      child: CustomVideoPlayer(
+                        videoPath: controller.videoPath.value,
                       ),
                     ),
 
