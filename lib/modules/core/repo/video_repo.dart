@@ -9,7 +9,7 @@ class VideoRepo {
 
   Future<void> saveVideo(VideoEntity video) async {
     await objectbox.put(video);
-    debugPrint('>>>>>>>>>>>> Video saved at path: ${video.path}');
+    debugPrint('>>>>>>>>>>>>Repo:  Video saved at path: ${video.path}');
   }
 
   Future<void> deleteVideo(int id) async {

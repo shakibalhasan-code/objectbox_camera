@@ -1,5 +1,5 @@
 import 'package:crud_objtbx/modules/core/controllers/home_controller.dart';
-import 'package:crud_objtbx/modules/screens/video_recording_screen.dart';
+import 'package:crud_objtbx/modules/views/screens/video_recording_screen.dart';
 import 'package:crud_objtbx/modules/views/widgets/custom_video_player.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -13,68 +13,115 @@ class HomeScreen extends StatelessWidget {
       init: HomeController(),
       builder: (controller) {
         return Scaffold(
-          body: Obx(() {
-            if (controller.videoList.isEmpty) {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Center(child: Text('No videos recorded yet.')),
-                  SizedBox(height: 10),
-                  Center(
-                    child: Text('Tap the button below to record a video.'),
-                  ),
-                  SizedBox(height: 20),
-                  OutlinedButton(
-                    onPressed: () => Get.to(VideoRecordingScreen()),
-                    child: Text('Record Video'),
-                  ),
-                ],
-              );
-            }
-            return Padding(
-              padding: const EdgeInsets.all(16),
-              child: ListView.builder(
-                itemCount: controller.videoList.length,
-                itemBuilder: (context, index) {
-                  final video = controller.videoList[index];
-                  return ListTile(
-                    tileColor: Colors.grey[200], // Set background color here
-
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+          appBar: AppBar(
+            title: const Text('Video Library'),
+            backgroundColor: Colors.blue,
+            foregroundColor: Colors.white,
+          ),
+          body: controller.videoList.isEmpty
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.videocam_off,
+                      size: 64,
+                      color: Colors.grey,
                     ),
-
-                    onTap: () =>
-                        Get.to(CustomVideoPlayer(videoPath: video.path)),
-                    title: Text(video.title),
-                    subtitle: Text(
-                      'Recorded on: ${video.createdAt}\n'
-                      'Duration: ${(video.durationInMs / 1000).toStringAsFixed(2)} seconds\n'
-                      'Saved at: ${video.path}',
+                    const SizedBox(height: 16),
+                    const Center(child: Text('No videos recorded yet.')),
+                    const SizedBox(height: 10),
+                    const Center(
+                      child: Text('Tap the button below to record a video.'),
                     ),
-
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => controller.deleteVideo(video.id),
+                    const SizedBox(height: 20),
+                    OutlinedButton(
+                      onPressed: () =>
+                          Get.to(() => const VideoRecordingScreen()),
+                      child: const Text('Record Video'),
                     ),
-                  );
-                },
-              ),
-            );
-          }),
-          floatingActionButton: controller.videoList.isNotEmpty
-              ? SizedBox(
-                  width: Get.width * 0.6,
-                  child: FloatingActionButton(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-
-                    onPressed: () => Get.to(VideoRecordingScreen()),
-                    child: Text('Record New Video'),
-                  ),
+                  ],
                 )
-              : null,
+              : Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: ListView.builder(
+                    itemCount: controller.videoList.length,
+                    itemBuilder: (context, index) {
+                      final video = controller.videoList[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: ListTile(
+                          tileColor: Colors.grey[200],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          leading: const Icon(
+                            Icons.video_library,
+                            color: Colors.blue,
+                          ),
+                          onTap: () => Get.to(
+                            () => CustomVideoPlayer(videoPath: video.path),
+                          ),
+                          title: Text(
+                            video.title,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            'Recorded: ${_formatDateTime(video.createdAt)}\n'
+                            'Duration: ${(video.durationInMs / 1000).toStringAsFixed(1)}s',
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => _showDeleteConfirmation(
+                              context,
+                              controller,
+                              video.id,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () => Get.to(() => const VideoRecordingScreen()),
+            label: const Text('Record Video'),
+            icon: const Icon(Icons.videocam),
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.day}/${dateTime.month}/${dateTime.year} '
+        '${dateTime.hour.toString().padLeft(2, '0')}:'
+        '${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  void _showDeleteConfirmation(
+    BuildContext context,
+    HomeController controller,
+    int videoId,
+  ) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Video'),
+          content: const Text('Are you sure you want to delete this video?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                controller.deleteVideo(videoId);
+                Navigator.of(context).pop();
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
         );
       },
     );

@@ -4,6 +4,7 @@ import 'package:camera/camera.dart';
 import 'package:crud_objtbx/modules/core/controllers/home_controller.dart';
 import 'package:crud_objtbx/modules/core/models/video_entity.dart';
 import 'package:crud_objtbx/modules/core/repo/video_repo.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:video_player/video_player.dart';
@@ -75,6 +76,8 @@ class VideoController extends GetxController {
     try {
       await _cameraController!.startVideoRecording();
       isRecording.value = true;
+      debugPrint('Video recording started');
+      update();
     } on CameraException catch (e) {
       Get.snackbar(
         'Error',
@@ -86,6 +89,7 @@ class VideoController extends GetxController {
   Future<void> stopVideoRecording() async {
     if (_cameraController == null ||
         !_cameraController!.value.isRecordingVideo) {
+      debugPrint('No recording in progress to stop.');
       // No recording in progress.
       return;
     }
@@ -94,12 +98,17 @@ class VideoController extends GetxController {
       final file = await _cameraController!.stopVideoRecording();
       isRecording.value = false;
       videoPath.value = file.path;
+      debugPrint('Video recorded to: ${file.path}');
 
       // Initialize video player to get duration
       final tempController = VideoPlayerController.file(File(file.path));
+      debugPrint('Initializing temporary video player controller for duration');
       await tempController.initialize();
+      debugPrint('Temporary video player initialized');
       final duration = tempController.value.duration;
+      debugPrint('Video duration: $duration');
       await tempController.dispose();
+      debugPrint('Temporary video player controller disposed');
 
       Get.find<HomeController>().saveVideo(
         VideoEntity(
@@ -111,24 +120,30 @@ class VideoController extends GetxController {
       );
 
       _initializeVideoPlayer();
+      update(); // Notify GetBuilder to rebuild the UI
     } on CameraException catch (e) {
       Get.snackbar('Error', 'Failed to stop video recording: ${e.description}');
     }
   }
 
   void _initializeVideoPlayer() {
-    if (videoPath.isNotEmpty) {
+    if (videoPath.value.isNotEmpty) {
+      debugPrint('Initializing video player for: ${videoPath.value}');
+      videoPlayerController?.dispose(); // Dispose previous controller if any
       videoPlayerController = VideoPlayerController.file(File(videoPath.value))
         ..initialize()
             .then((_) {
-              update();
+              debugPrint('Video player initialized successfully');
               if (videoPlayerController != null) {
                 videoPlayerController!.play();
                 isPlaying.value = true;
                 videoPlayerController!.setLooping(true);
+                debugPrint('Video player started playing');
               }
+              update(); // Notify GetBuilder after initialization is complete
             })
             .catchError((error) {
+              debugPrint('Failed to initialize video player: $error');
               Get.snackbar(
                 'Error',
                 'Failed to initialize video player: $error',
@@ -147,14 +162,17 @@ class VideoController extends GetxController {
       videoPlayerController!.play();
       isPlaying.value = true;
     }
+    update(); // Notify GetBuilder to update play/pause button
   }
 
   void reset() {
+    debugPrint('Resetting video controller');
     videoPlayerController?.dispose();
     videoPlayerController = null;
     videoPath.value = '';
     isPlaying.value = false;
+    isRecording.value = false;
 
-    update();
+    update(); // Notify GetBuilder to rebuild the UI
   }
 }
