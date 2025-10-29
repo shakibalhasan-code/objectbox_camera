@@ -11,27 +11,45 @@ class CustomVideoPlayerController extends GetxController {
   final isPlaying = false.obs;
   final videoPath = ''.obs;
 
-  late Future<void> initializeVideoPlayerFuture;
+  Future<void>? initializeVideoPlayerFuture;
 
   void initializePlayer(String path) {
+    if (path.isEmpty) {
+      debugPrint('Error: Video path is empty');
+      return;
+    }
+
     videoPath.value = path;
     debugPrint('Initializing VideoPlayerController with path: $path');
 
     _disposeController();
 
-    _controller = vp.VideoPlayerController.file(File(path));
-    initializeVideoPlayerFuture = _controller!
-        .initialize()
-        .then((_) {
-          debugPrint('VideoPlayerController initialized successfully');
-          _controller!.addListener(_videoListener);
-          isInitialized.value = true;
-          isPlaying.value = false;
-          update();
-        })
-        .catchError((error) {
-          debugPrint('Failed to initialize VideoPlayerController: $error');
-        });
+    try {
+      _controller = vp.VideoPlayerController.file(File(path));
+      initializeVideoPlayerFuture = _controller!
+          .initialize()
+          .then((_) {
+            debugPrint('VideoPlayerController initialized successfully');
+            if (_controller != null) {
+              _controller!.addListener(_videoListener);
+              isInitialized.value = true;
+              isPlaying.value = false;
+              update();
+            }
+          })
+          .catchError((error) {
+            debugPrint('Failed to initialize VideoPlayerController: $error');
+            isInitialized.value = false;
+            isPlaying.value = false;
+            update();
+          });
+    } catch (e) {
+      debugPrint('Error creating VideoPlayerController: $e');
+      isInitialized.value = false;
+      isPlaying.value = false;
+      initializeVideoPlayerFuture = null;
+      update();
+    }
   }
 
   void _videoListener() {
@@ -62,6 +80,7 @@ class CustomVideoPlayerController extends GetxController {
     }
     isInitialized.value = false;
     isPlaying.value = false;
+    initializeVideoPlayerFuture = null;
   }
 
   @override
