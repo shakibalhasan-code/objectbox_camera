@@ -1,5 +1,6 @@
 import 'package:camera/camera.dart';
 import 'package:crud_objtbx/modules/core/controllers/video_record_controller.dart';
+import 'package:crud_objtbx/modules/views/widgets/custom_video_player.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
@@ -26,10 +27,12 @@ class VideoRecordingScreen extends StatelessWidget {
                       child: AspectRatio(
                         aspectRatio:
                             controller.videoPlayerController!.value.aspectRatio,
-                        child: VideoPlayer(controller.videoPlayerController!),
+                        child: CustomVideoPlayer(
+                          videoPath: controller.videoPath.value,
+                        ),
                       ),
                     ),
-                    // Play/Pause Button Overlay
+
                     Positioned(
                       bottom: 20,
                       child: IconButton(

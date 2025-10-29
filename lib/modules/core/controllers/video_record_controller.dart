@@ -1,12 +1,16 @@
 import 'dart:io';
+
 import 'package:camera/camera.dart';
 import 'package:get/get.dart';
+import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoController extends GetxController {
   CameraController? get cameraController => _cameraController;
 
+  // Private instance
   CameraController? _cameraController;
+
   late Future<void> initializeControllerFuture;
   VideoPlayerController? videoPlayerController;
 
@@ -17,7 +21,8 @@ class VideoController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _initializeCamera();
+
+    initializeControllerFuture = _initializeCamera();
   }
 
   @override
@@ -32,29 +37,33 @@ class VideoController extends GetxController {
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
         Get.snackbar('Error', 'No cameras available');
-        return;
+        throw Exception('No cameras available');
       }
+
       final firstCamera = cameras.first;
       _cameraController = CameraController(
         firstCamera,
         ResolutionPreset.medium,
       );
-      initializeControllerFuture = _cameraController!.initialize();
-      await initializeControllerFuture; // Wait for initialization to complete
-      update(); // Notify UI to rebuild
+
+      await _cameraController!.initialize();
     } catch (e) {
       Get.snackbar('Error', 'Failed to initialize camera: $e');
+
+      rethrow;
     }
   }
 
   Future<void> startVideoRecording() async {
-    if (_cameraController == null) return;
-
-    // Ensure the camera is initialized
     await initializeControllerFuture;
 
-    if (_cameraController!.value.isRecordingVideo) {
+    if (_cameraController == null || !_cameraController!.value.isInitialized) {
+      Get.snackbar('Error', 'Camera is not initialized.');
       return;
+    }
+
+    if (_cameraController!.value.isRecordingVideo) {
+      return; // A recording is already in progress.
     }
 
     try {
@@ -69,10 +78,9 @@ class VideoController extends GetxController {
   }
 
   Future<void> stopVideoRecording() async {
-    if (_cameraController == null) return;
-
-    if (!_cameraController!.value.isRecordingVideo) {
-      // No recording to stop
+    if (_cameraController == null ||
+        !_cameraController!.value.isRecordingVideo) {
+      // No recording in progress.
       return;
     }
 
@@ -108,14 +116,14 @@ class VideoController extends GetxController {
       videoPlayerController!.play();
       isPlaying.value = true;
     }
-    update();
   }
 
-  // A method to reset the state to record another video
   void reset() {
     videoPlayerController?.dispose();
     videoPlayerController = null;
     videoPath.value = '';
     isPlaying.value = false;
+
+    update();
   }
 }

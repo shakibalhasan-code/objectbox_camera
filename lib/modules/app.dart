@@ -1,4 +1,4 @@
-import 'package:crud_objtbx/modules/screens/video_recording_screen.dart';
+import 'package:crud_objtbx/modules/views/screens/video_recording_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_navigation/get_navigation.dart';
 
